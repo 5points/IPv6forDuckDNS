@@ -50,7 +50,7 @@ printf "\nYour IPv4 has been detected as $ipv4addr\n"
 # Connect to DuckDNS
 printf "\nNow connecting to DuckDNS and publishing your IPv6 $ipv6addr"
 printf "\nFor domain $duckdomain.duckdns.org with token $ducktoken.\n\n"
-curl -s "https://www.duckdns.org/update?domains=$duckdomain&token=$ducktoken&ip=$ipv4addr&ipv6=$ipv6addr" -o duck.log
+curl -s "https://www.duckdns.org/update?domains=$duckdomain&token=$ducktoken&ip=$ipv4addr&ipv6=$ipv6addr" -o "$baseDir"/duck.log
 
 # Write changes and create cronjob
 
@@ -62,7 +62,7 @@ else
   read -r -e -p "Did it update correctly? [Y/n]" RyesNo
   yesNo=${RyesNo:-$yesNo}
   if [[ "$yesNo" == "Y" || "$yesNo" == "y" || "$yesNo" == "yes" || "$yesNo" == "Yes" ]] ; then
-    printf "\n 1. Writing changes to ~/duck6.conf."
+    printf "\n 1. Writing changes to "$baseDir"/duck6.conf."
     echo "#IPv6 for DuckDNS Config Script. You can make changes to this file." > "$duck6conf"
     {
       echo duckdomain=\""$duckdomain"\"
