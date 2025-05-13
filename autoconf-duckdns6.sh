@@ -1,18 +1,19 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # shellcheck source=/dev/null
 # Autoconfig for DuckDNS IPv4 & IPv6 Update Script v1.0.3
 # By James Watt 2017-05-12 Updated 2021-06-08
+# By 5points Last updated on 2025-05-13
 # This script is intended for hosts with a public IPv6 address
 
 set -e
 
 # Paths
 baseDir=$(cd "$(dirname "$0")" || exit; pwd -P)
-duck6conf="$HOME"/.duck6.conf
+duck6conf="$baseDir"/.duck6.conf
 
 # Probe IPv4 and IPv6 addresses
 read -r _ _ _ _ iface _ ipv4local <<<"$(ip r g 8.8.8.8 | head -1)"
-ipv6addr=$(ip addr show dev "$iface" | sed -e's/^.*inet6 \([^ ]*\)\/.*$/\1/;t;d' | grep -v '^fd' | grep -v '^fe80' | head -1)
+ipv6addr=$(ip addr show dev "$iface" | grep 'mngtmpaddr' | grep 'noprefixroute' | sed -e's/^.*inet6 \([^ ]*\)\/.*$/\1/;t;d' | grep -v '^fd' | grep -v '^fe80' | head -1)
 
 # Does .duck6.conf exist?
 if [[ -f "$duck6conf" ]] ; then
@@ -49,7 +50,7 @@ printf "\nYour IPv4 has been detected as $ipv4addr\n"
 # Connect to DuckDNS
 printf "\nNow connecting to DuckDNS and publishing your IPv6 $ipv6addr"
 printf "\nFor domain $duckdomain.duckdns.org with token $ducktoken.\n\n"
-curl -s "https://www.duckdns.org/update?domains=$duckdomain&token=$ducktoken&ip=$ipv4addr&ipv6=$ipv6addr"
+curl -s "https://www.duckdns.org/update?domains=$duckdomain&token=$ducktoken&ip=$ipv4addr&ipv6=$ipv6addr" -o duck.log
 
 # Write changes and create cronjob
 
@@ -68,10 +69,10 @@ else
       echo ducktoken=\""$ducktoken"\"
       echo ipv4service=\""$ipv4service"\"
     } >> "$duck6conf"
-    printf "\n 2. Copying this script to ~/duckdns6.sh"
-    cp "$baseDir"/autoconf-duckdns6.sh "$HOME"/duckdns6.sh
+    printf "\n 2. Copying this script to "$baseDir"/duckdns6.sh"
+    cp "$baseDir"/autoconf-duckdns6.sh "$baseDir"/duckdns6.sh
     printf "\n 3. Setting up cronjob to run every 5 minutes"
-    (crontab -l 2>/dev/null; echo "*/5 * * * * ~/duckdns6.sh >/dev/null 2>&1") | crontab -
+    (crontab -l 2>/dev/null; echo "*/5 * * * * $baseDir/duckdns6.sh >/dev/null 2>&1") | crontab -
     printf "\n\nConfiguration complete.\n"
   else
     printf "\n\nThis script will now exit. Please double check your settings and run ./autoconfig-duckdns6.sh again.\n\n"
